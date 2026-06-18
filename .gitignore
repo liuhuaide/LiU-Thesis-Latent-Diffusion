@@ -1,0 +1,19 @@
+# 数据 & 模型权重（太大，不入库）
+data/SQG/dataset*/
+saved_models/
+*.pth
+*.ckpt
+*.npy
+# 实验产物
+eval_results*/
+results/
+figures/
+logs/
+wandb/
+nohup.out
+*.log
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
