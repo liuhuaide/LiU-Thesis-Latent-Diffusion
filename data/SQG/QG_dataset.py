@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-# import data.SQG.constants as SQGConstants # 如果不需要用到常量，可以注释掉
+# import data.SQG.constants as SQGConstants # comment out if you don't need the constants
 
 class SQGStateDataset(Dataset):
     def __init__(self, data_path, mean, std, nx=64, h=3):
@@ -15,12 +15,12 @@ class SQGStateDataset(Dataset):
         self.mean = mean
         self.std = std
 
-        # 修改：增加容错，确保能找到文件
+        # Modified: add fault tolerance to make sure the file is found
         file_pattern = os.path.join(data_path, f"sqg_N{nx}_{h}hrly_*.npy")
         file_list = sorted(glob.glob(file_pattern))
         
         if not file_list:
-            # 备用方案：尝试找 3hrly (因为你的文件名是 3hrly)
+            # Fallback: try the 3hrly file (your filenames use 3hrly)
             file_pattern = os.path.join(data_path, f"sqg_N{nx}_3hrly_*.npy")
             file_list = sorted(glob.glob(file_pattern))
 
@@ -91,12 +91,12 @@ class SQGForecastDataset(Dataset):
         self.max_length = max_length
         self.standardize = standardize
         
-        # [修改 1] 修复路径问题：直接使用传入的 data_path
-        # 注意：这里假设 data_path 指向了 dataset/train 文件夹，因为 .pt 文件在那里
+        # [Edit 1] Fix path handling: use the data_path passed in directly
+        # Note: assumes data_path points to the dataset/train folder, where the .pt files live
         self.standardization_path = data_path 
 
         if standardize:
-            # 使用 try-except 防止找不到文件时直接崩溃，给出更清晰的提示
+            # Use try-except to avoid a hard crash when the file is missing and give a clearer message
             try:
                 self.data_mean = torch.load(os.path.join(
                     self.standardization_path, "data_mean.pt"), weights_only=True).view(1, -1, 1, 1)
@@ -104,7 +104,7 @@ class SQGForecastDataset(Dataset):
                     self.standardization_path, "data_std.pt"), weights_only=True).view(1, -1, 1, 1)
             except FileNotFoundError:
                 print(f"WARNING: Stats files not found in {self.standardization_path}. Trying parent directory...")
-                # 尝试去上一级目录找（以防 data_path 是子目录）
+                # Try the parent directory (in case data_path is a subdirectory)
                 parent_dir = os.path.dirname(self.standardization_path)
                 self.data_mean = torch.load(os.path.join(
                     parent_dir, "data_mean.pt"), weights_only=True).view(1, -1, 1, 1)
@@ -113,7 +113,7 @@ class SQGForecastDataset(Dataset):
 
         self.subset_ds = subset_ds
 
-        # [修改 2] 允许 "validation" 作为名称
+        # [Edit 2] Allow "validation" as a split name
         assert split in ("train", "val", "validation", "test"), f"Unknown dataset split: {split}"
         
         if split == "train":
@@ -121,8 +121,8 @@ class SQGForecastDataset(Dataset):
         else:
             self.random_subsample = False
 
-        # 注意：这里如果 data_path 已经是 .../train，再 join split 会变成 .../train/train
-        # 既然我们传入的 data_path 已经是具体的子目录了，这里可以直接用 data_path
+        # Note: if data_path is already .../train, joining split would give .../train/train
+        # Since the data_path passed in is already the specific subdirectory, use data_path directly
         self.sample_dir_path = data_path 
         
         self.trajectory_files = sorted(glob.glob(os.path.join(
@@ -200,9 +200,9 @@ class SQGForecastDataset(Dataset):
 
 
 if __name__ == "__main__":
-    # [修改 3] 测试代码修正
-    # 1. 移除了 h=3 (因为它不在 __init__ 里)
-    # 2. 修改 data_path 为你自己的实际路径，方便你直接运行测试
+    # [Edit 3] Fixes for the test code
+    # 1. Removed h=3 (it is not in __init__)
+    # 2. Change data_path to your own actual path so you can run the test directly
     dataset = SQGForecastDataset(
         data_path="/local/data2/huali824/mt-huaide-liu/data/SQG/dataset/train",
         nx=64,
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         init_states=2,
         split="train",
         standardize=True,
-        subset_ds=False, # 注意：原代码是 subset, 这里改成了 subset_ds
+        subset_ds=False, # Note: the original code used 'subset'; renamed to 'subset_ds' here
     )
     print(f"Dataset length: {len(dataset)}")
     init_states, target_states = dataset[0]

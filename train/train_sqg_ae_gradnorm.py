@@ -4,9 +4,9 @@ import wandb
 from torch.utils.data import DataLoader
 from pathlib import Path
 from networks.autoencoder import get_autoencoder, AutoEncoderLoss
-from data.sqg_dataloader import SQGDataset  # 注意：这里导入的名字要和你建的文件名对应
+from data.sqg_dataloader import SQGDataset  # Note: the imported name must match your file/class name
 
-# ============ 配置 ============
+# ============ Config ============
 parser = argparse.ArgumentParser(description="Train SQG Autoencoder")
 parser.add_argument("--compression", type=int, default=4, help="Target compression rate (1, 2, 4, 8, 16)")
 parser.add_argument("--version", type=str, default=None, help="Version suffix, e.g. v2 (default: None = v1 behavior)")
@@ -29,20 +29,20 @@ BATCH_SIZE = 32
 LR_MAP = {1: 1e-4, 2: 1e-4, 4: 3e-5, 8: 1e-5, 16: 5e-6}
 LR = LR_MAP[COMPRESSION]
 
-# 保存路径：ae_x4 (v1) or ae_x4_v2 (with version)
+# Save path: ae_x4 (v1) or ae_x4_v2 (with version)
 version_suffix = f"_{VERSION}" if VERSION else ""
 SAVE_DIR = Path(f"saved_models/ae_x{COMPRESSION}{version_suffix}")
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-# ============ 数据 ============
-# 训练集和验证集都强制使用 train 目录下的统计量
+# ============ Data ============
+# Both train and val use the statistics from the train directory
 train_dataset = SQGDataset("data/SQG/dataset/train", stats_dir="data/SQG/dataset/train")
 val_dataset   = SQGDataset("data/SQG/dataset/validation", stats_dir="data/SQG/dataset/train")
 
 train_loader  = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,  num_workers=2, pin_memory=True)
 val_loader    = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
 
-# ============ 模型 ============
+# ============ Model ============
 attn_heads = {args.attention_stage: args.attention_heads} if args.attention_stage is not None else {}
 hid_ch = tuple(args.hid_channels)
 autoencoder = get_autoencoder(
@@ -65,7 +65,7 @@ if args.skip_mode:
 if attn_heads:
     print(f"Self-attention enabled: {attn_heads}")
 
-# ============ 损失函数 ============
+# ============ Loss ============
 if args.spectral_weight > 0:
     loss_fn = AutoEncoderLoss(
         losses=["vmse", "spectral"],
@@ -77,7 +77,7 @@ else:
     loss_desc = "vmse"
 print(f"Loss: {loss_desc}")
 
-# ============ 优化器 ============
+# ============ Optimizer ============
 if args.optimizer == "psgd":
     from kron_torch import Kron
     psgd_lr = args.lr if args.lr is not None else 1e-3
@@ -90,14 +90,14 @@ else:
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
     print(f"Optimizer: AdamW (lr={adamw_lr})")
 
-# ============ 验证压缩率 ============
+# ============ Verify compression rate ============
 with torch.no_grad():
     dummy = torch.randn(1, 2, 64, 64).to(DEVICE)
     z = autoencoder.encode(dummy)
-    print(f"输入: {dummy.shape} -> 潜在: {z.shape}")
-    print(f"实际压缩率: {dummy.numel() / z.numel():.1f}x")
+    print(f"Input: {dummy.shape} -> Latent: {z.shape}")
+    print(f"Actual compression rate: {dummy.numel() / z.numel():.1f}x")
 
-# ============ 训练 ============
+# ============ Training ============
 wandb_name = f"ae_x{COMPRESSION}{version_suffix}"
 wandb.init(project="sqg-autoencoder", name=wandb_name)
 
@@ -107,12 +107,12 @@ for epoch in range(EPOCHS):
     # --- train ---
     autoencoder.train()
     train_loss = 0.0
-    max_grad_norm = 0.0  # 本 epoch 内裁剪前梯度范数的峰值
+    max_grad_norm = 0.0  # peak pre-clip gradient norm within this epoch
     for x in train_loader:
         x = x.to(DEVICE)
         if args.optimizer == "psgd":
             # PSGD requires closure; zero_grad inside because closure may be called multiple times
-            _gn = [0.0]  # 容器：把 closure 内的范数带到外层
+            _gn = [0.0]  # container to carry the norm out of the closure
             def closure():
                 optimizer.zero_grad()
                 loss = loss_fn(autoencoder, x)
@@ -148,9 +148,9 @@ for epoch in range(EPOCHS):
 
     if val_loss < best_val_loss:
         best_val_loss = val_loss
-        # 保存为 best.pth
+        # Save as best.pth
         torch.save(autoencoder.state_dict(), SAVE_DIR / "best.pth")
-        print(f"  🌟 [破纪录] 验证集误差创新低！模型已保存至 best.pth")
+        print(f"  🌟 [new best] Validation error reached a new low! Model saved to best.pth")
     
 torch.save(autoencoder.state_dict(), SAVE_DIR / "state.pth")
-print(f"模型已保存到 {SAVE_DIR}")
+print(f"Model saved to {SAVE_DIR}")

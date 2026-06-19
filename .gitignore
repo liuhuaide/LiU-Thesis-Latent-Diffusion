@@ -1,10 +1,10 @@
-# 数据 & 模型权重（太大，不入库）
+# Data & model weights (too large to commit)
 data/SQG/dataset*/
 saved_models/
 *.pth
 *.ckpt
 *.npy
-# 实验产物
+# Experiment artifacts
 eval_results*/
 results/
 figures/

@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-# 用法:  python make_edm_training_figs.py [CSV_DIR] [OUT_DIR]
-# 或设环境变量 EDM_FIG_CSV_DIR / EDM_FIG_OUT_DIR。默认读当前目录、写当前目录。
+# Usage:  python make_edm_training_figs.py [CSV_DIR] [OUT_DIR]
+# or set env vars EDM_FIG_CSV_DIR / EDM_FIG_OUT_DIR. Defaults to the current directory.
 CSV_DIR = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("EDM_FIG_CSV_DIR", "."))
 OUT_DIR = Path(sys.argv[2] if len(sys.argv) > 2 else os.environ.get("EDM_FIG_OUT_DIR", "."))
 OUT_DIR.mkdir(parents=True, exist_ok=True)

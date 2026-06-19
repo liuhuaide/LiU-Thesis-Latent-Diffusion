@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# 如果你不想把训练日志同步到网页端，可以保持 offline；
-# 如果你想在 wandb 网页上看图表，可以把这行注释掉
+# Keep offline if you don't want to sync training logs to the web;
+# comment this line out if you want to view charts on the wandb website
 export WANDB_MODE=offline 
 
-echo "🚀 开始训练 Latent EDM (x4 压缩) 模型..."
-echo "🖥️  显卡检查: $(nvidia-smi --query-gpu=name --format=csv,noheader)"
+echo "🚀 Starting Latent EDM (x4 compression) training..."
+echo "🖥️  GPU check: $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 
-# 设置 Python 寻包路径并启动训练
+# Set the Python import path and launch training
 PYTHONPATH=$(pwd) python3 forecasting/trainer.py \
     --model LatentEDM \
     --data_path data/SQG/dataset_latent_x4/train \
@@ -27,4 +27,4 @@ PYTHONPATH=$(pwd) python3 forecasting/trainer.py \
     --wandb_run_name "Latent_EDM_x4_Run" \
     --wandb_project SQG_Local_Train
 
-echo "✅ 训练命令执行完毕！"
+echo "✅ Training command finished!"

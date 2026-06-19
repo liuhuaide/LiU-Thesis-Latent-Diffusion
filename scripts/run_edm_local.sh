@@ -1,16 +1,16 @@
 #!/bin/bash
 export WANDB_MODE=offline
-# 配置部分
+# Configuration
 # -----------------------------
 DATA_PATH="/local/data2/huali824/mt-huaide-liu/data/SQG/dataset"
 EXP_NAME="EDM_Local_Run_MSE"
 
-echo "🚀 开始训练 EDM 模型..."
-echo "📂 数据路径: $DATA_PATH"
-echo "🖥️  显卡检查: $(nvidia-smi --query-gpu=name --format=csv,noheader)"
+echo "🚀 Starting EDM model training..."
+echo "📂 Data path: $DATA_PATH"
+echo "🖥️  GPU check: $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 
-# 运行训练
-# 注意：batch_size 我设置了 32，如果显存不够可以改小（比如 16）
+# Run training
+# Note: batch_size is set to 32; lower it (e.g. 16) if you run out of GPU memory
 PYTHONPATH=$(pwd) python3 forecasting/trainer.py \
     --model EDM \
     --data_path "$DATA_PATH" \
@@ -26,4 +26,4 @@ PYTHONPATH=$(pwd) python3 forecasting/trainer.py \
     --n_workers 8 \
     --wandb_project SQG_Local_Train
 
-echo "✅ 训练脚本已启动！"
+echo "✅ Training script launched!"
